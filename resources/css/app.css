@@ -1,0 +1,10 @@
+@import "variables.css";
+
+
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@import "./partials/print/month.css";
+@import "tippy.js/dist/tippy.css";
+@import "tippy.js/themes/light.css";
