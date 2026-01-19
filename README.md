@@ -1,64 +1,192 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+# Schichtplan
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Ein modernes Schichtplanungs- und Arbeitszeiterfassungssystem, entwickelt mit Laravel 11 und Vue 3.
 
-## About Laravel
+## Überblick
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Schichtplan ist eine webbasierte Anwendung zur Verwaltung von Arbeitsschichten und Mitarbeitereinsätzen. Das System ermöglicht es Administratoren und Teamleitern, Schichten zu planen und Mitarbeitern, sich für verfügbare Schichten einzutragen.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Hauptfunktionen
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Schichtverwaltung** – Erstellen, bearbeiten und löschen von Schichten mit Datum, Uhrzeit und benötigter Mitarbeiteranzahl
+- **Jobgruppen** – Organisation von Mitarbeitern in verschiedene Arbeitsgruppen (z.B. Gastro, Büro)
+- **Schichtanmeldung** – Mitarbeiter können sich selbstständig für Schichten eintragen oder absagen
+- **Arbeitszeiterfassung** – Automatische Berechnung von Arbeitszeiten, Pausen und Überstunden
+- **Minijob-Verwaltung** – Spezielle Kontingent-Verwaltung für Minijobber
+- **API-Zugang** – RESTful API für mobile Apps und externe Integrationen
 
-## Learning Laravel
+## Tech-Stack
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+| Bereich | Technologie |
+|---------|-------------|
+| Backend | Laravel 11, PHP 8.2+ |
+| Frontend | Vue 3, Inertia.js |
+| Styling | Tailwind CSS 3.0 |
+| Authentifizierung | Laravel Sanctum |
+| Datenbank | MySQL |
+| PDF-Generierung | Laravel DomPDF |
+| Benachrichtigungen | Telegram |
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Installation
 
-## Laravel Sponsors
+### Voraussetzungen
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+- PHP 8.2 oder höher
+- Composer
+- Node.js & NPM
+- MySQL
 
-### Premium Partners
+### Setup
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[CMS Max](https://www.cmsmax.com/)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
+1. **Repository klonen**
+   ```bash
+   git clone https://github.com/your-username/schichtplan.git
+   cd schichtplan
+   ```
 
-## Contributing
+2. **PHP-Abhängigkeiten installieren**
+   ```bash
+   composer install
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+3. **NPM-Abhängigkeiten installieren**
+   ```bash
+   npm install
+   ```
 
-## Code of Conduct
+4. **Umgebungsvariablen konfigurieren**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+5. **Datenbank einrichten**
 
-## Security Vulnerabilities
+   Erstelle eine MySQL-Datenbank und passe die `.env` Datei an:
+   ```env
+   DB_DATABASE=schichtplan
+   DB_USERNAME=your_username
+   DB_PASSWORD=your_password
+   ```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+6. **Migrationen ausführen**
+   ```bash
+   php artisan migrate
+   ```
 
-## License
+7. **Frontend kompilieren**
+   ```bash
+   npm run dev
+   ```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+8. **Server starten**
+   ```bash
+   php artisan serve
+   ```
+
+Die Anwendung ist nun unter `http://localhost:8000` erreichbar.
+
+## Projektstruktur
+
+```
+schichtplan/
+├── app/
+│   ├── Http/Controllers/     # Web- und API-Controller
+│   ├── Models/               # Eloquent Models
+│   └── Mail/                 # E-Mail-Klassen
+├── database/
+│   ├── migrations/           # Datenbankmigrationen
+│   └── seeders/              # Datenbank-Seeder
+├── resources/
+│   └── js/
+│       ├── Pages/            # Vue-Seiten
+│       ├── Components/       # Wiederverwendbare Komponenten
+│       └── Layouts/          # Layout-Komponenten
+├── routes/
+│   ├── web.php               # Web-Routen
+│   └── api.php               # API-Routen
+└── config/
+    └── tenant.php            # Mandanten-Konfiguration
+```
+
+## API-Dokumentation
+
+Die API nutzt Laravel Sanctum für die Authentifizierung. Alle Endpunkte erfordern einen gültigen API-Token.
+
+### Schichten
+
+| Methode | Endpunkt | Beschreibung |
+|---------|----------|--------------|
+| GET | `/api/shifts` | Verfügbare Schichten abrufen |
+| GET | `/api/shifts/{id}` | Schichtdetails abrufen |
+| POST | `/api/shifts/{id}/enroll` | Für Schicht anmelden |
+| DELETE | `/api/shifts/{id}/unenroll` | Schichtanmeldung zurückziehen |
+| POST | `/api/shifts/{id}/decline` | Schicht absagen |
+
+### Beispiel-Request
+
+```bash
+curl -X POST "https://your-domain.com/api/shifts/1/enroll" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"comment": "Bin verfügbar!"}'
+```
+
+## Benutzerrollen
+
+| Rolle | Berechtigungen |
+|-------|----------------|
+| **Admin** | Vollzugriff auf alle Funktionen |
+| **Teamleiter** | Verwaltung von Schichten und Jobgruppen |
+| **Mitarbeiter** | Anmeldung für Schichten, eigene Arbeitszeiten einsehen |
+| **Minijobber** | Wie Mitarbeiter, mit Kontingent-Beschränkungen |
+
+## Konfiguration
+
+### Mandanten-Einstellungen
+
+In `config/tenant.php` können folgende Features aktiviert werden:
+
+```php
+return [
+    'name' => env('TENANT_NAME', 'default'),
+    'features' => [
+        'minijob' => env('TENANT_FEATURE_MINIJOB', false),
+        'tournaments' => env('TENANT_FEATURE_TOURNAMENTS', false),
+        'group_notifications' => env('TENANT_FEATURE_GROUP_NOTIFICATIONS', false),
+    ],
+];
+```
+
+## Entwicklung
+
+### Frontend-Assets kompilieren
+
+```bash
+# Entwicklung mit Hot-Reload
+npm run dev
+
+# Produktion
+npm run build
+```
+
+### Code-Style
+
+```bash
+# PHP Code-Style prüfen und korrigieren
+./vendor/bin/pint
+```
+
+### Tests ausführen
+
+```bash
+php artisan test
+```
+
+## Lizenz
+
+Dieses Projekt steht unter der [GNU General Public License v3.0](LICENSE).
+
+---
+
+Entwickelt mit Laravel und Vue.js
