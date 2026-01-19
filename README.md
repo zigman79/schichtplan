@@ -40,7 +40,7 @@ Schichtplan ist eine webbasierte Anwendung zur Verwaltung von Arbeitsschichten u
 
 1. **Repository klonen**
    ```bash
-   git clone https://github.com/your-username/schichtplan.git
+   git clone https://github.com/zigman79//schichtplan.git
    cd schichtplan
    ```
 
