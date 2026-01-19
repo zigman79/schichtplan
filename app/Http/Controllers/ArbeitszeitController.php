@@ -43,8 +43,8 @@ class ArbeitszeitController extends Controller
 
         if (config('tenant.use_tournaments')) {
 
-            $tournaments = Http::withToken(env('BACKOFFICE_API_KEY'))
-                ->get('https://api.handicapp.golf/tournaments/calendar/'.$year.'/'.$month)
+            $tournaments = Http::withToken(config('tenant.backoffice_api_key'))
+                ->get(config('tenant.backoffice_api_url').'/tournaments/calendar/'.$year.'/'.$month)
                 ->json();
 
         }
@@ -183,8 +183,8 @@ class ArbeitszeitController extends Controller
 
         if (config('tenant.use_tournaments')) {
 
-            $tournaments = Http::withToken(env('BACKOFFICE_API_KEY'))
-                ->get('https://api.handicapp.golf/tournaments/calendar/'.$year.'/'.$month)
+            $tournaments = Http::withToken(config('tenant.backoffice_api_key'))
+                ->get(config('tenant.backoffice_api_url').'/tournaments/calendar/'.$year.'/'.$month)
                 ->json();
 
         }

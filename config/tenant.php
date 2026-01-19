@@ -51,6 +51,15 @@ return [
      * --------------------------------------------------------------------------
      * Gender Language
      */
-    'gender_language' => env('TENANT_GENDER_LANG', false)
+    'gender_language' => env('TENANT_GENDER_LANG', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Backoffice API
+    |--------------------------------------------------------------------------
+    |
+    */
+    'backoffice_api_url' => env('BACKOFFICE_API_URL', 'https://api.handicapp.golf'),
+    'backoffice_api_key' => env('BACKOFFICE_API_KEY'),
 
 ];
