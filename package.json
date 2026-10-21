@@ -1,36 +1,28 @@
 {
     "private": true,
+    "type": "module",
     "scripts": {
-        "dev": "npm run development",
-        "development": "mix",
-        "watch": "mix watch",
-        "watch-poll": "mix watch -- --watch-options-poll=1000",
-        "hot": "mix watch --hot",
-        "prod": "npm run production",
-        "production": "mix --production"
+        "dev": "vite",
+        "build": "vite build"
     },
     "devDependencies": {
-        "@inertiajs/inertia": "^0.10.0",
-        "@inertiajs/inertia-vue3": "^0.5.1",
-        "@inertiajs/progress": "^0.2.6",
-        "@tailwindcss/forms": "^0.4.0",
-        "@vue/compiler-sfc": "^3.2.26",
-        "autoprefixer": "^10.4.0",
-        "axios": "^0.24.0",
-        "dayjs": "^1.10.7",
-        "laravel-mix": "^6.0.39",
-        "lodash": "^4.17.19",
-        "postcss": "^8.4.5",
-        "postcss-import": "^14.0.1",
-        "tailwindcss": "^3.0.1",
-        "vue": "^3.0.5",
-        "vue-currency-input": "^2.4.0",
-        "vue-loader": "^16.1.2"
+        "@tailwindcss/vite": "^4.3.3",
+        "@vitejs/plugin-vue": "^6.0.8",
+        "laravel-vite-plugin": "^3.1.3",
+        "tailwindcss": "^4.3.3",
+        "vite": "^8.2.0"
     },
     "dependencies": {
-        "@headlessui/vue": "^1.4.2",
-        "@heroicons/vue": "^1.0.5",
-        "vue-tippy": "v6",
+        "@headlessui/vue": "^1.7.23",
+        "@heroicons/vue": "^2.2.0",
+        "@inertiajs/vue3": "^3.6.1",
+        "@tailwindcss/forms": "^0.5.11",
+        "axios": "^1.19.0",
+        "dayjs": "^1.11.21",
+        "lodash": "^4.18.1",
+        "vue": "^3.5.41",
+        "vue-currency-input": "^3.2.2",
+        "vue-tippy": "^6.7.1",
         "vue-toastification": "^2.0.0-rc.5",
         "vuedraggable": "^4.1.0"
     }

@@ -4,6 +4,7 @@ namespace App\Utils;
 
 use App\Models\Arbeitszeit;
 use App\Models\Feiertag;
+use App\Models\MinijobVorgabe;
 use App\Models\StartValue;
 use App\Models\User;
 use Carbon\Carbon;
@@ -22,19 +23,6 @@ class ArbeitszeitUtil
 
     public function monatsAuswertung(User $user, Carbon $monat)
     {
-        if ($user->eingestellt_am > $monat) {
-            return [
-                'monat' => $monat,
-                'urlaub' => 0,
-                'sum' => 0,
-                'sum_nice' => 0,
-                'vorgabe' => 0,
-                'vorgabe_nice' => 0,
-                'diff' => 0,
-                'diff_nice' => 0,
-            ];
-        }
-
         $sum = 0;
 
         $vorgabe = $monat->daysInMonth;
@@ -79,7 +67,18 @@ class ArbeitszeitUtil
                 $sum += $urlaub;
             }
         }
-
+        if ($user->eingestellt_am > $monat) {
+            return [
+                'monat' => $monat,
+                'urlaub' => 0,
+                'sum' => $sum,
+                'sum_nice' => $this->convertToHours($sum),
+                'vorgabe' => 0,
+                'vorgabe_nice' => $this->convertToHours(0),
+                'diff' => $sum,
+                'diff_nice' => $this->convertToHours($sum),
+            ];
+        }
         return [
             'monat' => $monat,
             'urlaub' => $urlaubstage,
@@ -92,6 +91,114 @@ class ArbeitszeitUtil
         ];
     }
 
+    /**
+     * Minijobber der Standardgruppe werden nur nach Stunden bezahlt: abgerechnet wird
+     * höchstens die Monatsvorgabe, Mehrstunden wandern in den Folgemonat und füllen
+     * dort auf, was unter der Vorgabe bleibt. Urlaub, Krank und Schule zählen nicht.
+     *
+     * Jedes Jahr startet am 1.1. mit einem Übertrag: entweder von Hand in den Startwerten
+     * eingetragen (start_values.minijob_uebertrag) oder aus dem Dezember des Vorjahres
+     * berechnet. Im MINIJOB_UEBERTRAG_START_JAHR startet die Regel ohne Eintrag mit 0.
+     */
+    public const MINIJOB_STANDARD_GROUP = 1;
+
+    public const MINIJOB_UEBERTRAG_START_JAHR = 2026;
+
+    public function isMinijobStandard(User $user): bool
+    {
+        return $user->isMinijob() && optional($user->minijob_group)->id === self::MINIJOB_STANDARD_GROUP;
+    }
+
+    /**
+     * Übertrag zum 1.1. in Minuten, wie er sich ohne Eintrag ergibt.
+     */
+    public function minijobStartwertBerechnet(User $user, int $year): int
+    {
+        if ($year <= self::MINIJOB_UEBERTRAG_START_JAHR) {
+            return 0;
+        }
+
+        return $this->minijobAbrechnung($user, Carbon::create($year - 1, 12))['uebertrag_neu'];
+    }
+
+    /**
+     * Von Hand eingetragener Übertrag zum 1.1. in Minuten, oder null.
+     */
+    public function minijobStartwertManuell(User $user, int $year): ?int
+    {
+        $stunden = StartValue::whereUserId($user->id)->where('year', $year)->value('minijob_uebertrag');
+
+        return $stunden === null ? null : (int) round($stunden * 60);
+    }
+
+    public function minijobAbrechnung(User $user, Carbon $monat): array
+    {
+        if ($monat->year < self::MINIJOB_UEBERTRAG_START_JAHR) {
+            return [
+                'gearbeitet' => 0,
+                'uebertrag_alt' => 0,
+                'grenze' => 0,
+                'abzurechnen' => 0,
+                'uebertrag_neu' => 0,
+            ];
+        }
+
+        return last($this->minijobJahresverlauf($user, $monat->year, $monat->month));
+    }
+
+    /**
+     * Abrechnung der Monate Januar bis $bisMonat eines Jahres, je Monat ein Eintrag
+     * wie bei minijobAbrechnung (Schlüssel 'monat' zusätzlich).
+     */
+    public function minijobJahresverlauf(User $user, int $year, int $bisMonat): array
+    {
+        $aktuell = Carbon::create($year, 1, 1)->startOfDay();
+        $ende = Carbon::create($year, $bisMonat, 1)->lastOfMonth();
+
+        $minuten = Arbeitszeit::whereUserId($user->id)
+            ->whereBetween('tag', [$aktuell, $ende])
+            ->whereNotNull('beginn')
+            ->whereNotNull('ende')
+            ->get()
+            ->groupBy(fn ($arbeitszeit) => Carbon::parse($arbeitszeit->tag)->format('Y-m'))
+            ->map(fn ($tage) => $tage->sum(fn ($arbeitszeit) => $arbeitszeit->getArbeitszeitInMinutesAttribute()));
+
+        $vorgaben = MinijobVorgabe::whereGroupId(self::MINIJOB_STANDARD_GROUP)
+            ->orderBy('year')
+            ->orderBy('month')
+            ->get();
+
+        $uebertrag = $this->minijobStartwertManuell($user, $year)
+            ?? $this->minijobStartwertBerechnet($user, $year);
+
+        $verlauf = [];
+
+        for ($m = 1; $m <= $bisMonat; $m++) {
+            // Fehlt die Vorgabe für einen Monat, gilt die letzte davor (bzw. die erste überhaupt)
+            $vorgabe = $vorgaben->last(fn ($v) => $v->year * 100 + $v->month <= $aktuell->year * 100 + $aktuell->month)
+                ?? $vorgaben->first();
+            $grenze = (int) round(($vorgabe->hours ?? 0) * 60);
+
+            $gearbeitet = $minuten->get($aktuell->format('Y-m'), 0);
+            $gesamt = $gearbeitet + $uebertrag;
+            $abzurechnen = min($gesamt, $grenze);
+
+            $verlauf[] = [
+                'monat' => $aktuell->clone(),
+                'gearbeitet' => $gearbeitet,
+                'uebertrag_alt' => $uebertrag,
+                'grenze' => $grenze,
+                'abzurechnen' => $abzurechnen,
+                'uebertrag_neu' => $gesamt - $abzurechnen,
+            ];
+
+            $uebertrag = $gesamt - $abzurechnen;
+            $aktuell->addMonth();
+        }
+
+        return $verlauf;
+    }
+
     public function calculateOvertime(int $year, User $user, $shouldSave = true)
     {
 
@@ -102,6 +209,10 @@ class ArbeitszeitUtil
         }
 
         $auswertungUtil = new ArbeitszeitUtil();
+
+        if ($this->isMinijobStandard($user) && $year >= self::MINIJOB_UEBERTRAG_START_JAHR) {
+            return $this->calculateMinijobUebertrag($year, $user, $start, $shouldSave);
+        }
 
         $sum = $start->ueberstunden * 60;
 
@@ -147,6 +258,66 @@ class ArbeitszeitUtil
         $start->ueberstunden_nice = $auswertungUtil->convertToHours($start->ueberstunden * 60);
 
         return $data;
+    }
+
+    /**
+     * Jahresübersicht für Minijobber der Standardgruppe: es gibt kein Soll und keine
+     * Minusstunden. Je Monat wird höchstens die Vorgabe bezahlt, der Rest bleibt als
+     * Übertrag stehen. 'diff' ist die Änderung des Übertrags, die Summe der Stand.
+     */
+    private function calculateMinijobUebertrag(int $year, User $user, StartValue $start, bool $shouldSave): array
+    {
+        $bisMonat = $year == now()->year ? now()->month - 1 : 12;
+        $startwert = $this->minijobStartwertManuell($user, $year) ?? $this->minijobStartwertBerechnet($user, $year);
+        $urlaub = $start->resturlaub + $start->urlaub;
+
+        $verlauf = [];
+        $stand = $startwert;
+
+        foreach ($bisMonat > 0 ? $this->minijobJahresverlauf($user, $year, $bisMonat) : [] as $a) {
+            $urlaubstage = Arbeitszeit::whereUserId($user->id)
+                ->whereBetween('tag', [$a['monat']->clone()->firstOfMonth(), $a['monat']->clone()->lastOfMonth()])
+                ->where('frei_urlaub_krank', 'urlaub')
+                ->count();
+            $urlaub -= $urlaubstage;
+            $diff = $a['uebertrag_neu'] - $a['uebertrag_alt'];
+            $stand = $a['uebertrag_neu'];
+
+            $verlauf[] = [
+                'monat' => $a['monat'],
+                'urlaub' => $urlaubstage,
+                'sum' => $a['gearbeitet'],
+                'sum_nice' => $this->convertToHours($a['gearbeitet']),
+                'vorgabe' => $a['abzurechnen'],
+                'vorgabe_nice' => $this->convertToHours($a['abzurechnen']),
+                'diff' => $diff,
+                'diff_nice' => $this->convertToHours($diff),
+                'uebertrag' => $stand,
+                'uebertrag_nice' => $this->convertToHours($stand),
+            ];
+        }
+
+        $start->ueberstunden_aktuell = $stand / 60;
+        $start->resturlaub_aktuell = $urlaub;
+
+        if ($shouldSave) {
+            $start->save();
+        }
+
+        $start->ueberstunden_nice = $this->convertToHours($startwert);
+
+        return [
+            'start' => $start,
+            'user' => $user,
+            'year' => $year,
+            'minijob' => true,
+            'verlauf' => $verlauf,
+            'end' => [
+                'summe' => $stand,
+                'summe_nice' => $this->convertToHours($stand),
+                'urlaub' => $urlaub,
+            ],
+        ];
     }
 
     public function getWeekData(int $tage = 7)

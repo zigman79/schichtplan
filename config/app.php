@@ -169,7 +169,7 @@ return [
 
     'aliases' => Facade::defaultAliases()->merge([
         // Benutzerdefinierte Aliase hier hinzufügen
-        'PDF' => Barryvdh\DomPDF\Facade::class,
+        'PDF' => Barryvdh\DomPDF\Facade\Pdf::class,
 
     ])->toArray(),
 

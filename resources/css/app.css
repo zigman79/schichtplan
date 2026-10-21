@@ -1,10 +1,62 @@
 @import "variables.css";
 
-
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import "tailwindcss";
+@plugin "@tailwindcss/forms";
 
 @import "./partials/print/month.css";
 @import "tippy.js/dist/tippy.css";
 @import "tippy.js/themes/light.css";
+
+/*
+ | Tailwind 4 nutzt CSS-first Konfiguration; was früher in tailwind.config.js
+ | unter theme.extend stand, steht jetzt hier.
+ */
+@theme {
+    --font-sans: Nunito, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+    --color-tenant-50: var(--tenant-color-50);
+    --color-tenant-100: var(--tenant-color-100);
+    --color-tenant-200: var(--tenant-color-200);
+    --color-tenant-300: var(--tenant-color-300);
+    --color-tenant-400: var(--tenant-color-400);
+    --color-tenant-500: var(--tenant-color-500);
+    --color-tenant-600: var(--tenant-color-600);
+    --color-tenant-700: var(--tenant-color-700);
+    --color-tenant-800: var(--tenant-color-800);
+    --color-tenant-900: var(--tenant-color-900);
+}
+
+/*
+ | Blade-Templates liegen außerhalb der automatischen Quell-Erkennung von
+ | Tailwind 4 (die nur vom CSS-Verzeichnis aus sucht), deshalb explizit.
+ */
+@source "../views";
+@source "../js";
+
+/*
+ | Tailwind 4 hat ein paar Defaults geändert. Ohne diesen Block würden
+ | bestehende Klassen anders aussehen als vorher:
+ |   - border-/divide-Farbe ohne Angabe: gray-200 -> currentColor
+ |   - Placeholder-Farbe: gray-400 -> currentColor mit 50% Deckkraft
+ |   - Cursor auf Buttons: pointer -> default
+ */
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+        color: var(--color-gray-400);
+    }
+
+    button:not(:disabled),
+    [role="button"]:not(:disabled) {
+        cursor: pointer;
+    }
+}

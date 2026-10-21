@@ -13,10 +13,10 @@
               v-model="userFilter"
               type="text"
               placeholder="Nach Mitarbeitern filtern..."
-              class="block w-64 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-tenant-500 focus:border-tenant-500 sm:text-sm"
+              class="block w-64 px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-tenant-500 focus:border-tenant-500 sm:text-sm"
             />
 
-        <div class="flex-shrink-0 mt-2 sm:mt-0 flex-col sm:flex-row flex space-y-2 sm:space-y-0 sm:space-x-2 sm:items-center">
+        <div class="shrink-0 mt-2 sm:mt-0 flex-col sm:flex-row flex space-y-2 sm:space-y-0 sm:space-x-2 sm:items-center">
 
           <template v-if="isAdmin || isTeamLeader || true">
             <a target="_blank" :href="route('print.uebersicht', [ year, month])">
@@ -32,14 +32,20 @@
             </Button>
           </a>
 
-          <div class="flex-shrink-0 hidden lg:flex space-x-2 w-auto">
+          <a v-if="isTeamLeader" target="_blank" :href="route('users.trinkgeldliste', authUser.id)">
+            <Button>
+              Trinkgeldliste erstellen
+            </Button>
+          </a>
+
+          <div class="shrink-0 hidden lg:flex space-x-2 w-auto">
 
 
             <select
                 id="month"
                 v-model="month"
                 name="month"
-                class="block w-32 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-tenant-500 focus:border-tenant-500 sm:text-sm rounded-md">
+                class="block w-32 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-hidden focus:ring-tenant-500 focus:border-tenant-500 sm:text-sm rounded-md">
               <option
                   v-for="(month, key) in months"
                   :key="`month-${key}`"
@@ -53,7 +59,7 @@
                 id="year"
                 v-model="year"
                 name="year"
-                class="block w-32 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-tenant-500 focus:border-tenant-500 sm:text-sm rounded-md">
+                class="block w-32 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-hidden focus:ring-tenant-500 focus:border-tenant-500 sm:text-sm rounded-md">
               <option
                   v-for="(year, key) in years"
                   :key="`year-${key}`"
@@ -78,14 +84,16 @@
               :users="filteredUsers"
               :tournaments="tournaments"
               :feiertage="feiertage"
+              :shifts="shifts"
               :key="`arbeitsplan-${month}-${year}`"
           />
         </div>
         <div class="lg:hidden">
           <Tagesplan
-              :today="today"
+              :day="selectedDay"
               :users="filteredUsers"
-              :key="`tagesplan-${today}`"
+              :key="`tagesplan-${selectedDay}`"
+              @select-day="selectDay"
               :tournaments="tournaments"
               :feiertage="feiertage"
           />
@@ -110,13 +118,12 @@
 
 <script>
 import BreezeAuthenticatedLayout from '@/Layouts/Authenticated.vue'
-import { Head, usePage } from '@inertiajs/inertia-vue3'
-import Button from '@/Components/Button'
-import Arbeitsplan from '@/Partials/Arbeitsplan'
-import Tagesplan from '@/Partials/Tagesplan'
+import { Head, usePage, router } from '@inertiajs/vue3'
+import Button from '@/Components/Button.vue'
+import Arbeitsplan from '@/Partials/Arbeitsplan.vue'
+import Tagesplan from '@/Partials/Tagesplan.vue'
 import { computed, ref, watchEffect, watch } from 'vue'
-
-import { Inertia } from '@inertiajs/inertia'
+import dayjs from 'dayjs'
 
 export default {
   props: {
@@ -125,6 +132,7 @@ export default {
     year: String,
     tournaments: Object,
     feiertage: Object,
+    shifts: Object,
   },
   setup (props, { attrs }) {
 
@@ -149,29 +157,31 @@ export default {
     const year = ref(parseInt(props.year) || today.getFullYear())
     const loading = ref(false)
     const userFilter = ref('')
-    const filteredUsers = ref(props.users)
+    const debouncedUserFilter = ref('')
 
-    // Watcher für userFilter mit 100ms Verzögerung
+    // Watcher für userFilter mit kurzer Verzögerung
     let filterTimeout = null
     watch(userFilter, (newValue) => {
-      // Setze filteredUsers sofort auf leeres Array
-      filteredUsers.value = []
-      
       // Lösche vorherigen Timeout falls vorhanden
       if (filterTimeout) {
         clearTimeout(filterTimeout)
       }
-      
-      // Setze nach 100ms den korrekten Wert
+
       filterTimeout = setTimeout(() => {
-        if (!newValue) {
-          filteredUsers.value = props.users
-        } else {
-          filteredUsers.value = props.users.filter(user =>
-            user.name.toLowerCase().includes(newValue.toLowerCase())
-          )
-        }
-      }, 10)
+        debouncedUserFilter.value = newValue
+      }, 100)
+    })
+
+    // Bewusst computed und kein ref: so wirken sich neue Props (z.B. nach dem
+    // Löschen einer Arbeitszeit) sofort aus, ohne den Filter zurückzusetzen
+    const filteredUsers = computed(() => {
+      const search = debouncedUserFilter.value.trim().toLowerCase()
+
+      if (!search) {
+        return props.users
+      }
+
+      return props.users.filter(user => user.name.toLowerCase().includes(search))
     })
 
     // Funktion zum Löschen des Filters
@@ -194,7 +204,7 @@ export default {
       if ((parseInt(props.month) !== month.value) || (parseInt(props.year) !== year.value)) {
         loading.value = true
 
-        Inertia.get(`/dashboard/${year.value}/${month.value}`, {}, {
+        router.get(`/dashboard/${year.value}/${month.value}`, {}, {
           onSuccess: () => {
             loading.value = false
           },
@@ -202,8 +212,41 @@ export default {
       }
     })
 
-    const isAdmin = usePage().props.value.auth.user.arbeitszeit_admin
-    const isTeamLeader = usePage().props.value.auth.user.arbeitszeit_teamleader
+    // Mobile Tagesansicht: angezeigter Tag kommt aus ?tag=YYYY-MM-DD, sonst heute
+    // bzw. der Monatserste, wenn ein anderer Monat geladen ist
+    const isInLoadedMonth = (day) => dayjs(day).month() + 1 === month.value && dayjs(day).year() === year.value
+    const urlTag = new URLSearchParams(window.location.search).get('tag')
+    const selectedDay = ref(
+        urlTag && /^\d{4}-\d{2}-\d{2}$/.test(urlTag) && isInLoadedMonth(urlTag)
+            ? urlTag
+            : isInLoadedMonth(today)
+                ? dayjs(today).format('YYYY-MM-DD')
+                : dayjs(new Date(year.value, month.value - 1, 1)).format('YYYY-MM-DD')
+    )
+
+    const selectDay = (day) => {
+      const url = `/dashboard/${dayjs(day).year()}/${dayjs(day).month() + 1}`
+
+      if (isInLoadedMonth(day)) {
+        // Daten sind schon da: nur Tag wechseln und in der URL merken, damit
+        // nach dem Speichern (Redirect::back) derselbe Tag wieder erscheint
+        selectedDay.value = day
+        window.history.replaceState(window.history.state, '', `${url}?tag=${day}`)
+        return
+      }
+
+      // Anderer Monat: Monatsdaten neu laden
+      loading.value = true
+      router.get(url, { tag: day }, {
+        onFinish: () => {
+          loading.value = false
+        },
+      })
+    }
+
+    const authUser = usePage().props.auth.user
+    const isAdmin = authUser.arbeitszeit_admin
+    const isTeamLeader = authUser.arbeitszeit_teamleader || authUser.arbeitszeit_admin
 
     return {
       months,
@@ -211,7 +254,10 @@ export default {
       year,
       years,
       today,
+      selectedDay,
+      selectDay,
       loading,
+      authUser,
       isAdmin,
       isTeamLeader,
       userFilter,

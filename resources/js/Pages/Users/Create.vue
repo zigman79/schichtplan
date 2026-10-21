@@ -15,7 +15,7 @@
     <div class="py-12">
       <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
 
-        <div class="bg-white rounded-md shadow overflow-x-auto">
+        <div class="bg-white rounded-md shadow-sm overflow-x-auto">
           <form @submit.prevent="create">
             <div class="p-8 gap-8 grid grid-cols-1 lg:grid-cols-2">
               <div>
@@ -112,26 +112,26 @@
 
               <div class="col-span-2 space-y-8">
                 <SwitchGroup as="div" class="flex items-center justify-between">
-                  <span class="flex-grow flex flex-col">
+                  <span class="grow flex flex-col">
                     <SwitchLabel as="span" class="text-sm font-bold text-gray-900" passive>Keine Arbeitszeiten</SwitchLabel>
                     <SwitchDescription as="span" class="text-sm text-gray-500">Wird beim Arbeitsplan und den PDF's nicht angezeigt.</SwitchDescription>
                   </span>
                   <Switch v-model="form.keine_arbeitszeit"
-                          :class="[form.keine_arbeitszeit ? 'bg-tenant-600' : 'bg-gray-200', 'relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tenant-500']">
+                          :class="[form.keine_arbeitszeit ? 'bg-tenant-600' : 'bg-gray-200', 'relative inline-flex shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-tenant-500']">
                     <span aria-hidden="true"
-                          :class="[form.keine_arbeitszeit ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200']"/>
+                          :class="[form.keine_arbeitszeit ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transform ring-0 transition ease-in-out duration-200']"/>
                   </Switch>
                 </SwitchGroup>
 
                 <SwitchGroup as="div" class="flex items-center justify-between">
-                  <span class="flex-grow flex flex-col">
+                  <span class="grow flex flex-col">
                     <SwitchLabel as="span" class="text-sm font-bold text-gray-900" passive>Minijob</SwitchLabel>
                     <SwitchDescription as="span" class="text-sm text-gray-500">Es werden die Minijob-Zeiten für die Pläne verwendet.</SwitchDescription>
                   </span>
                   <Switch v-model="form.minijob"
-                          :class="[form.minijob ? 'bg-tenant-600' : 'bg-gray-200', 'relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tenant-500']">
+                          :class="[form.minijob ? 'bg-tenant-600' : 'bg-gray-200', 'relative inline-flex shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-tenant-500']">
                     <span aria-hidden="true"
-                          :class="[form.minijob ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200']"/>
+                          :class="[form.minijob ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transform ring-0 transition ease-in-out duration-200']"/>
                   </Switch>
                 </SwitchGroup>
 
@@ -145,7 +145,7 @@
             <div class="px-8 py-4 bg-gray-50 border-t border-gray-100 flex items-center">
 
               <button
-                  class="ml-auto inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm font-semibold rounded-md text-white bg-tenant-600 hover:bg-tenant-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tenant-500"
+                  class="ml-auto inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-xs font-semibold rounded-md text-white bg-tenant-600 hover:bg-tenant-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-tenant-500"
                   type="submit"
               >
                 <SpinningLoader tailwind="w-4 h-4 text-white" v-if="form.processing"/>
@@ -163,21 +163,20 @@
 
 <script>
 import BreezeAuthenticatedLayout from '@/Layouts/Authenticated.vue'
-import { ChevronRightIcon } from '@heroicons/vue/solid'
-import { Head, Link, usePage } from '@inertiajs/inertia-vue3'
-import Input from '@/Components/Input'
-import Label from '@/Components/Label'
-import { useForm } from '@inertiajs/inertia-vue3'
-import SpinningLoader from '@/Components/SpinningLoader'
-import SelectBox from '@/Components/SelectBox'
-import { arbeitszeit } from '@/utils/roles'
-import InputError from '@/Components/InputError'
+import { ChevronRightIcon } from '@heroicons/vue/24/solid'
+import { Head, Link, usePage, useForm } from '@inertiajs/vue3'
+import Input from '@/Components/Input.vue'
+import Label from '@/Components/Label.vue'
+import SpinningLoader from '@/Components/SpinningLoader.vue'
+import SelectBox from '@/Components/SelectBox.vue'
+import { arbeitszeit } from '@/utils/roles.js'
+import InputError from '@/Components/InputError.vue'
 import { Switch, SwitchDescription, SwitchGroup, SwitchLabel } from '@headlessui/vue'
 
 export default {
   setup ({ attrs }) {
 
-  const genderLanguage = usePage().props.value.genderLanguage || false
+  const genderLanguage = usePage().props.genderLanguage || false
 
   const title = `Benutzer${genderLanguage ? ':in' : ''}`
 

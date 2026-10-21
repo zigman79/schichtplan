@@ -8,7 +8,7 @@
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                     Jobgruppen
                 </h2>
-                <div class="flex-shrink-0">
+                <div class="shrink-0">
                     <Link :href="route('jobGroups.create')">
                         <Button>
                             Jobgruppe hinzufügen
@@ -23,7 +23,7 @@
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-                <div class="bg-white rounded-md shadow overflow-x-auto">
+                <div class="bg-white rounded-md shadow-sm overflow-x-auto">
                     <table class="w-full whitespace-nowrap">
                         <thead>
                         <tr class="text-left font-bold">
@@ -88,9 +88,9 @@
 
 <script>
 import BreezeAuthenticatedLayout from '@/Layouts/Authenticated.vue'
-import {ChevronRightIcon} from '@heroicons/vue/solid'
-import {Head, Link} from '@inertiajs/inertia-vue3'
-import Button from '@/Components/Button'
+import {ChevronRightIcon} from '@heroicons/vue/24/solid'
+import {Head, Link} from '@inertiajs/vue3'
+import Button from '@/Components/Button.vue'
 
 export default {
     props: {

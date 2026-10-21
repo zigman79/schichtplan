@@ -8,7 +8,13 @@
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                     {{title}}
                 </h2>
-                <div class="flex-shrink-0">
+                <input
+                    v-model="filter"
+                    type="text"
+                    placeholder="Suchen..."
+                    class="block w-64 px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-tenant-500 focus:border-tenant-500 sm:text-sm"
+                />
+                <div class="shrink-0">
                     <Link :href="route('users.create')">
                         <Button>
                             {{title}} hinzufügen
@@ -23,7 +29,7 @@
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-                <div class="bg-white rounded-md shadow overflow-x-auto">
+                <div class="bg-white rounded-md shadow-sm overflow-x-auto">
                     <table class="w-full whitespace-nowrap">
                         <thead>
                         <tr class="text-left font-bold">
@@ -43,16 +49,16 @@
                         </tr>
                         </thead>
 
-                        <tbody v-if="users.length === 0">
+                        <tbody v-if="filteredUsers.length === 0">
                         <tr>
-                            <td class="border-t px-6 py-4" colspan="5">No users found.</td>
+                            <td class="border-t px-6 py-4" colspan="5">Keine Benutzer gefunden.</td>
                         </tr>
                         </tbody>
 
                         <template v-else>
                             <draggable
                                 tag="tbody"
-                                v-model="users"
+                                v-model="filteredUsers"
                                 group="users"
                                 @change="dragged"
                                 :disabled="sending"
@@ -77,6 +83,9 @@
                                                 <img v-if="element.photo" class="block w-5 h-5 rounded-full mr-2 -my-2"
                                                      :src="element.photo"/>
                                                 {{ element.name }}
+                                                <span v-if="element.permalink" title="Permalink Wochenplan aktiv" class="ml-2">
+                                                    <LinkIcon class="w-4 h-4 text-tenant-500"/>
+                                                </span>
                                             </Link>
                                         </td>
                                         <td class="border-t">
@@ -128,27 +137,31 @@
 
 <script>
 import draggable from 'vuedraggable'
-import {ref} from "vue";
+import {ref, computed} from "vue";
 import BreezeAuthenticatedLayout from '@/Layouts/Authenticated.vue'
-import {ChevronRightIcon, FingerPrintIcon} from '@heroicons/vue/solid'
-import {Head, Link, usePage} from '@inertiajs/inertia-vue3'
-import Button from '@/Components/Button'
-import NavLink from '@/Components/NavLink'
-import {Inertia} from '@inertiajs/inertia'
-
+import {ChevronRightIcon, FingerPrintIcon, LinkIcon} from '@heroicons/vue/24/solid'
+import { Head, Link, usePage, router } from '@inertiajs/vue3'
+import Button from '@/Components/Button.vue'
+import NavLink from '@/Components/NavLink.vue'
 export default {
     props: {
         users: Object,
     },
     setup(props, {attrs}) {
 
-        const isAdmin = usePage().props.value.auth.user.arbeitszeit_admin
-        const genderLanguage = usePage().props.value.genderLanguage || false
+        const isAdmin = usePage().props.auth.user.arbeitszeit_admin
+        const genderLanguage = usePage().props.genderLanguage || false
 
         const title = `Benutzer${genderLanguage ? ':in' : ''}`
 
         const sending = ref(false)
         const users = ref(props.users)
+        const filter = ref('')
+
+        const filteredUsers = computed(() => {
+            if (!filter.value) return users.value
+            return users.value.filter(u => u.name.toLowerCase().includes(filter.value.toLowerCase()))
+        })
 
         const sortBy = (field) => {
             users.value = [...users.value].sort((a, b) => {
@@ -169,7 +182,7 @@ export default {
 
             sending.value = true
 
-            Inertia.put(route('order.users'), {
+            router.put(route('order.users'), {
                 ids,
             }, {
                 onFinish: () => {
@@ -197,6 +210,8 @@ export default {
             sending,
             title,
             users,
+            filter,
+            filteredUsers,
             sortBy,
         }
 
@@ -207,6 +222,7 @@ export default {
         BreezeAuthenticatedLayout,
         ChevronRightIcon,
         FingerPrintIcon,
+        LinkIcon,
         Head,
         Link,
         draggable

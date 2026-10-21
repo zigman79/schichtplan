@@ -15,7 +15,7 @@
         <div class="py-12">
             <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
 
-                <div class="bg-white rounded-md shadow overflow-x-auto">
+                <div class="bg-white rounded-md shadow-sm overflow-x-auto">
                     <form @submit.prevent="create">
                         <div class="p-8 gap-8 grid grid-cols-1 lg:grid-cols-2">
                             <div>
@@ -38,7 +38,7 @@
                         <div class="px-8 py-4 bg-gray-50 border-t border-gray-100 flex items-center">
 
                             <button
-                                class="ml-auto inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm font-semibold rounded-md text-white bg-tenant-600 hover:bg-tenant-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tenant-500"
+                                class="ml-auto inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-xs font-semibold rounded-md text-white bg-tenant-600 hover:bg-tenant-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-tenant-500"
                                 type="submit"
                             >
                                 <SpinningLoader tailwind="w-4 h-4 text-white" v-if="form.processing"/>
@@ -56,14 +56,13 @@
 
 <script>
 import BreezeAuthenticatedLayout from '@/Layouts/Authenticated.vue'
-import { ChevronRightIcon } from '@heroicons/vue/solid'
-import { Head, Link } from '@inertiajs/inertia-vue3'
-import Input from '@/Components/Input'
-import Label from '@/Components/Label'
-import { useForm } from '@inertiajs/inertia-vue3'
-import SpinningLoader from '@/Components/SpinningLoader'
-import SelectBox from '@/Components/SelectBox'
-import InputError from '@/Components/InputError'
+import { ChevronRightIcon } from '@heroicons/vue/24/solid'
+import { Head, Link, useForm } from '@inertiajs/vue3'
+import Input from '@/Components/Input.vue'
+import Label from '@/Components/Label.vue'
+import SpinningLoader from '@/Components/SpinningLoader.vue'
+import SelectBox from '@/Components/SelectBox.vue'
+import InputError from '@/Components/InputError.vue'
 import { Switch, SwitchDescription, SwitchGroup, SwitchLabel } from '@headlessui/vue'
 
 export default {

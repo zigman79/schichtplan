@@ -3,9 +3,7 @@
 # Public Folders get gernerated by node
 /public/hot
 /public/storage
-/public/mix-manifest.json
-/public/js/*
-/public/css/*
+/public/build
 /public/images
 /public/fonts/*
 

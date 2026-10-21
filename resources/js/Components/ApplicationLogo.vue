@@ -28,13 +28,13 @@
 
 <script>
 
-import {usePage} from "@inertiajs/inertia-vue3";
+import {usePage} from "@inertiajs/vue3";
 
 export default {
     name: 'ApplicationLogo',
     setup() {
         return {
-            tenant: usePage().props.value.tenant
+            tenant: usePage().props.tenant
         }
     }
 }

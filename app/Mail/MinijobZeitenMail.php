@@ -21,7 +21,7 @@ class MinijobZeitenMail extends Mailable
      *
      * @return void
      */
-    public function __construct(public Carbon $zeitpunkt,public $data)
+    public function __construct(public Carbon $zeitpunkt, public $data, public $standard = [])
     {
         //
     }
@@ -50,6 +50,7 @@ class MinijobZeitenMail extends Mailable
             with: [
                 'zeit' => $this->zeitpunkt->format('m/Y'),
                 'data' => $this->data,
+                'standard' => $this->standard,
             ],
         );
     }

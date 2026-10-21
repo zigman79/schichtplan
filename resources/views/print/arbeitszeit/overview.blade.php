@@ -122,10 +122,17 @@
             <thead>
             <tr>
                 <th class="first">Monat</th>
-                <th>Sollstunden</th>
-                <th>Ist</th>
-                <th>+/- Stunden</th>
-                <th>Urlaub</th>
+                @if($minijob ?? false)
+                    <th>Bezahlt</th>
+                    <th>Gearbeitet</th>
+                    <th>+/- Übertrag</th>
+                    <th>Übertrag</th>
+                @else
+                    <th>Sollstunden</th>
+                    <th>Ist</th>
+                    <th>+/- Stunden</th>
+                    <th>Urlaub</th>
+                @endif
             </tr>
             <tr>
                 <th>
@@ -134,8 +141,13 @@
                 </th>
                 <th></th>
                 <th></th>
+                @if($minijob ?? false)
+                    <th></th>
+                @endif
                 <th>{{$start->ueberstunden_nice}} h</th>
-                <th>{{$start->urlaub}} (+{{$start->resturlaub }} Rest)</th>
+                @unless($minijob ?? false)
+                    <th>{{$start->urlaub}} (+{{$start->resturlaub }} Rest)</th>
+                @endunless
             </tr>
             </thead>
 
@@ -154,12 +166,19 @@
                         {{$monat["sum_nice"]}} h
                     </td>
 
+                    @if($minijob ?? false)
+                        <td>
+                            {{ $monat["diff"] > 0 ? '+' : '' }}{{ $monat["diff_nice"] }} h
+                        </td>
+                    @endif
                     <td>
-                        {{$monat["diff_nice"]}} h
+                        {{ ($minijob ?? false) ? $monat["uebertrag_nice"] : $monat["diff_nice"] }} h
                     </td>
-                    <td>
-                        {{$monat["urlaub"]}}
-                    </td>
+                    @unless($minijob ?? false)
+                        <td>
+                            {{$monat["urlaub"]}}
+                        </td>
+                    @endunless
                 </tr>
             @endforeach
             </tbody>
@@ -167,6 +186,9 @@
             <tfoot>
             <tr>
                 <td>Summe:</td>
+                @if($minijob ?? false)
+                    <td></td>
+                @endif
                 <td>
                 </td>
                 <td>
@@ -174,7 +196,9 @@
                 <td>
                     {{$end["summe_nice"]}}
                 </td>
-                <td>{{ $end["urlaub"] }}</td>
+                @unless($minijob ?? false)
+                    <td>{{ $end["urlaub"] }}</td>
+                @endunless
             </tr>
             </tfoot>
         </table>

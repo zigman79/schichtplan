@@ -9,6 +9,7 @@ use App\Jobs\SendSummaryToUsersJob;
 use App\Jobs\testjob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use App\Jobs\CopyMinijobVorgabenJob;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,3 +33,5 @@ Schedule::job(new SendSummaryToUsersJob())->weeklyOn(1,'01:00');
 Schedule::job(new SendSummaryToUsersJob())->monthlyOn(1,'02:00');
 Schedule::job(new SendJahresSummaryToUsersJob())->monthlyOn(1,'03:00');
 Schedule::job(new SendMinijobArbeitszeitenMailJob())->monthlyOn(1,'06:00');
+// Minijob-Vorgaben vom Vorjahr übernehmen (jährlich am 1. Januar)
+Schedule::job(new CopyMinijobVorgabenJob())->yearlyOn(1, 1, '00:01');

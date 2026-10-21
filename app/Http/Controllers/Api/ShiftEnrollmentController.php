@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Shift;
+use App\Utils\Telegram;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -46,7 +47,7 @@ class ShiftEnrollmentController extends Controller
             $enrolledUsers = $shift->users->map(function ($enrolledUser) {
                 return [
                     'id' => $enrolledUser->id,
-                    'name' => $enrolledUser->name,
+                    'name' => $enrolledUser->short_name,
                     'comment' => $enrolledUser->pivot->user_comment,
                     'enrolled_at' => $enrolledUser->pivot->created_at->format('Y-m-d H:i:s'),
                 ];
@@ -56,7 +57,7 @@ class ShiftEnrollmentController extends Controller
             $unavailableUsers = $shift->unavailableUsers->map(function ($unavailableUser) {
                 return [
                     'id' => $unavailableUser->id,
-                    'name' => $unavailableUser->name,
+                    'name' => $unavailableUser->short_name,
                     'reason' => $unavailableUser->pivot->reason,
                     'declined_at' => $unavailableUser->pivot->created_at->format('Y-m-d H:i:s'),
                 ];
@@ -165,6 +166,9 @@ class ShiftEnrollmentController extends Controller
             'user_comment' => $request->input('user_comment'),
         ]);
 
+        $shift->createArbeitszeit($user);
+        $this->sendShiftTelegram($user->name, 'Zusage', $shift);
+
         return response()->json([
             'message' => 'Erfolgreich zur Schicht angemeldet.',
             'shift' => [
@@ -194,6 +198,9 @@ class ShiftEnrollmentController extends Controller
 
         // Unenroll user
         $shift->users()->detach($user->id);
+
+        $shift->deleteArbeitszeit($user);
+        $this->sendShiftTelegram($user->name, 'Zusage zurückgezogen', $shift);
 
         return response()->json([
             'message' => 'Erfolgreich von der Schicht abgemeldet.',
@@ -246,6 +253,8 @@ class ShiftEnrollmentController extends Controller
             'reason' => $request->input('reason'),
         ]);
 
+        $this->sendShiftTelegram($user->name, 'Absage', $shift);
+
         return response()->json([
             'message' => 'Schicht erfolgreich abgesagt.',
         ], 200);
@@ -271,8 +280,23 @@ class ShiftEnrollmentController extends Controller
         // Remove unavailability
         $shift->unavailableUsers()->detach($user->id);
 
+        $this->sendShiftTelegram($user->name, 'Absage zurückgezogen', $shift);
+
         return response()->json([
             'message' => 'Absage erfolgreich zurückgezogen.',
         ], 200);
+    }
+
+    private function sendShiftTelegram(string $userName, string $action, Shift $shift): void
+    {
+        if (!env('TELEGRAM_GROUP')) {
+            return;
+        }
+
+        $date = $shift->shift_date->format('d.m.Y');
+        $group = $shift->jobGroup ? $shift->jobGroup->name : '';
+        $message = "Schicht {$date}" . ($group ? " ({$group})" : '') . ": {$userName} - {$action}";
+
+        Telegram::sendMessage(env('TELEGRAM_GROUP'), $message);
     }
 }

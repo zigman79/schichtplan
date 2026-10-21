@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Arbeitszeit;
 use App\Models\User;
+use App\Utils\Telegram;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -37,7 +38,7 @@ class ArbeitszeitUpdatedNotification extends Notification
      */
     public function shouldSend(User $notifiable, $channel)
     {
-        return $notifiable->telegram_id != "";
+        return Telegram::isValidChatId($notifiable->telegram_id);
     }
 
     /**

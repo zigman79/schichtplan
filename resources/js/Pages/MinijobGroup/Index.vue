@@ -8,7 +8,7 @@
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                     Minijob-Gruppen
                 </h2>
-                <div class="flex-shrink-0">
+                <div class="shrink-0">
                     <Link :href="route('minijobGroups.create')">
                         <Button>
                             Minijob-Gruppe hinzufügen
@@ -23,7 +23,7 @@
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-                <div class="bg-white rounded-md shadow overflow-x-auto">
+                <div class="bg-white rounded-md shadow-sm overflow-x-auto">
                     <table class="w-full whitespace-nowrap">
                         <thead>
                         <tr class="text-left font-bold">
@@ -83,12 +83,10 @@
 import draggable from 'vuedraggable'
 import {ref} from "vue";
 import BreezeAuthenticatedLayout from '@/Layouts/Authenticated.vue'
-import {ChevronRightIcon, FingerPrintIcon} from '@heroicons/vue/solid'
-import {Head, Link, usePage} from '@inertiajs/inertia-vue3'
-import Button from '@/Components/Button'
-import NavLink from '@/Components/NavLink'
-import {Inertia} from '@inertiajs/inertia'
-
+import {ChevronRightIcon, FingerPrintIcon} from '@heroicons/vue/24/solid'
+import { Head, Link, usePage, router } from '@inertiajs/vue3'
+import Button from '@/Components/Button.vue'
+import NavLink from '@/Components/NavLink.vue'
 export default {
     props: {
         groups: Object,
@@ -105,7 +103,7 @@ export default {
 
             sending.value = true
 
-            Inertia.put(route('order.users'), {
+            router.put(route('order.users'), {
                 ids,
             }, {
                 onFinish: () => {

@@ -4,12 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\JobGroup;
 use App\Models\MinijobGroup;
+use App\Models\StartValue;
+use App\Utils\ArbeitszeitUtil;
+use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Auth;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
@@ -36,6 +41,7 @@ class UserController extends Controller
                     'role' => $user->readable_role,
                     'sort' => $user->sort,
                     'minijob' => $user->minijob,
+                    'permalink' => (bool) $user->permalink_token,
                 ])->sortBy('sort')->values(),
         ]);
     }
@@ -114,7 +120,68 @@ class UserController extends Controller
             'other_users' => $other_users,
             'minijobGroups' => $minijobGroups,
             'jobGroups' => $jobGroups,
+            'permalinkUrl' => $user->permalink_token ? route('permalink.show', $user->permalink_token) : null,
+            'minijobUebertraege' => $this->minijobUebertraege($user),
         ]);
+    }
+
+    /**
+     * Übertrag der Standard-Minijobber je Jahr: Startwert zum 1.1. (berechnet und ggf. von Hand
+     * eingetragen) und Stand am Ende des Jahres bzw. des letzten abgeschlossenen Monats.
+     */
+    private function minijobUebertraege(User $user): array
+    {
+        $util = new ArbeitszeitUtil();
+
+        if (! $util->isMinijobStandard($user)) {
+            return [];
+        }
+
+        $letzterMonat = now()->subMonth()->firstOfMonth();
+        $jahre = [];
+
+        for ($year = ArbeitszeitUtil::MINIJOB_UEBERTRAG_START_JAHR; $year <= now()->year; $year++) {
+            $berechnet = $util->minijobStartwertBerechnet($user, $year);
+            $manuell = $util->minijobStartwertManuell($user, $year);
+            $bis = $year < now()->year ? Carbon::create($year, 12) : ($letzterMonat->year === $year ? $letzterMonat : null);
+
+            $jahre[] = [
+                'year' => $year,
+                'berechnet_nice' => $util->convertToHours($berechnet),
+                'manuell' => $manuell === null ? null : $util->convertToHours($manuell),
+                'stand_nice' => $bis ? $util->convertToHours($util->minijobAbrechnung($user, $bis)['uebertrag_neu']) : null,
+                'stand_monat' => $bis?->format('m/Y'),
+            ];
+        }
+
+        return array_reverse($jahre);
+    }
+
+    public function updateMinijobUebertrag(Request $request, User $user, int $year)
+    {
+        $request->validate([
+            'stunden' => ['nullable', 'string', 'regex:/^\s*(\d+(:[0-5]\d)?|\d+([.,]\d+)?)\s*$/'],
+        ], [
+            'stunden.regex' => 'Bitte als Stunden:Minuten (z.B. 12:30) oder Dezimalzahl (z.B. 12,5) eingeben.',
+        ]);
+
+        $eingabe = trim((string) $request->get('stunden'));
+
+        if ($eingabe === '') {
+            $stunden = null;
+        } elseif (str_contains($eingabe, ':')) {
+            [$h, $m] = explode(':', $eingabe);
+            $stunden = round((int) $h + (int) $m / 60, 2);
+        } else {
+            $stunden = round((float) str_replace(',', '.', $eingabe), 2);
+        }
+
+        StartValue::firstOrCreate(['user_id' => $user->id, 'year' => $year])
+            ->update(['minijob_uebertrag' => $stunden]);
+
+        return Redirect::back()->with('success', $stunden === null
+            ? "Übertrag zum 1.1.$year wird wieder berechnet."
+            : "Übertrag zum 1.1.$year gespeichert.");
     }
 
     /**
@@ -261,5 +328,42 @@ class UserController extends Controller
         return Redirect::back()->with([
             'success' => 'API-Token wurde generiert und gespeichert',
         ]);
+    }
+
+    /**
+     * Permalink zur schreibgeschützten Wochenansicht erzeugen.
+     * Ein neuer Token macht den bisherigen Link sofort ungültig.
+     */
+    public function generatePermalink(User $user)
+    {
+        // Es gibt keinen Unique-Index auf der Spalte, daher hier sicherstellen
+        do {
+            $token = Str::random(48);
+        } while (User::withTrashed()->where('permalink_token', $token)->exists());
+
+        $user->forceFill(['permalink_token' => $token])->save();
+
+        return Redirect::back()->with('success', 'Permalink wurde erstellt.');
+    }
+
+    public function destroyPermalink(User $user)
+    {
+        $user->forceFill(['permalink_token' => null])->save();
+
+        return Redirect::back()->with('success', 'Permalink wurde deaktiviert.');
+    }
+
+    public function trinkgeldliste(User $user)
+    {
+        // Team-Leiter:innen dürfen nur die Liste des eigenen Teams erstellen
+        abort_unless(Auth::user()->isArbeitszeitenAdmin() || Auth::id() === $user->id, 403);
+
+        $users = $user->arbeitszeitenTeam()->where('keine_arbeitszeit', 0)->orderBy('sort')->get();
+
+        $pdf = Pdf::loadView('print.trinkgeldliste', [
+            'users' => $users,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download('Trinkgeldliste.pdf');
     }
 }

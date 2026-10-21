@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\CheckInOutController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ShiftEnrollmentController;
 use App\Http\Controllers\ArbeitszeitController;
 use Illuminate\Http\Request;
@@ -30,6 +31,10 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::delete('shifts/{shift}/unenroll', [ShiftEnrollmentController::class, 'unenroll']);
     Route::post('shifts/{shift}/decline', [ShiftEnrollmentController::class, 'decline']);
     Route::delete('shifts/{shift}/decline', [ShiftEnrollmentController::class, 'removeDecline']);
+
+    // Dashboard API Endpoints
+    Route::get('dashboard/team-status', [DashboardController::class, 'teamStatus']);
+    Route::post('dashboard/job-group-shifts', [DashboardController::class, 'jobGroupShifts']);
 });
 Route::group(['middleware' => ['auth:sanctum','ability:token:create']], function () {
     Route::get('/code/{user:chip_id}', [RFIDController::class,'getToken']);

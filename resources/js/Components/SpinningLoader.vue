@@ -1,15 +1,15 @@
 <template>
-    <RefreshIcon :class="[tailwind, 'animate-spin direction-reverse']" />
+    <ArrowPathIcon :class="[tailwind, 'animate-spin direction-reverse']" />
 </template>
 
 <script>
 
-import {RefreshIcon} from '@heroicons/vue/solid'
+import {ArrowPathIcon} from '@heroicons/vue/24/solid'
 
 export default {
     name: "SpinningLoader",
     components: {
-        RefreshIcon,
+        ArrowPathIcon,
     },
     props: {
         tailwind: {

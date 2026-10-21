@@ -123,6 +123,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        // Wer den Token kennt, sieht den Plan ohne Login -> nie mitschicken
+        'permalink_token',
     ];
 
     /**
@@ -177,6 +179,22 @@ class User extends Authenticatable
         return $this->belongsToMany(User::class, 'arbeitszeiten_team', 'arbeitszeit_user_id',
             'user_id')->withTimestamps();
     }
+
+    /**
+     * Alle User, deren Arbeitszeiten dieser User sehen darf.
+     * Admins sehen alle, alle anderen ihr Team und sich selbst.
+     */
+    public function sichtbareArbeitszeitUsers(): Collection
+    {
+        $users = $this->isArbeitszeitenAdmin()
+            ? User::all()
+            : $this->arbeitszeitenTeam()->get()->add($this)->sortBy('sort');
+
+        return $users->reject(function ($user) {
+            return $user->keine_arbeitszeit;
+        })->unique('id')->values();
+    }
+
     /**
      * Realtionship to the Arbeitszeiten
      */
@@ -274,6 +292,15 @@ class User extends Authenticatable
         return $this->telegram_id;
     }
 
+    public function getShortNameAttribute(): string
+    {
+        $parts = explode(' ', $this->name, 2);
+        if (count($parts) === 2) {
+            return $parts[0] . ' ' . mb_substr($parts[1], 0, 1) . '.';
+        }
+        return $this->name;
+    }
+
     public function startValues($year)
     {
         return $this->hasOne(StartValue::class)->whereYear('year', $year)->first();
@@ -317,9 +344,10 @@ class User extends Authenticatable
         return optional($this->minijobGroups)->first();
     }
 
-    public function minijobVorgabe(int $year, int $month): MinijobVorgabe
+    public function minijobVorgabe(int $year, int $month): ?MinijobVorgabe
     {
-        return $this->minijob_group->vorgaben()->where('year', $year)->where('month', $month)->first();
+        return optional($this->minijob_group)->vorgaben()
+            ?->where('year', $year)->where('month', $month)->first();
     }
 
     /**

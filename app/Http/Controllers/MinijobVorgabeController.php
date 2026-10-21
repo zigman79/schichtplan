@@ -15,13 +15,15 @@ class MinijobVorgabeController extends Controller
      *
      * @return \Inertia\Response
      */
-    public function index($year = null)
+    public function index(Request $request, $year = null)
     {
         $year = $year ?? date('Y');
+        $selectedGroupId = $request->query('group') ? (int) $request->query('group') : null;
 
         return Inertia::render('MinijobVorgaben/Index', [
             'groups' => MinijobGroup::withVorgaben($year),
             'year' => $year,
+            'selectedGroupId' => $selectedGroupId,
         ]);
 
     }
@@ -70,4 +72,40 @@ class MinijobVorgabeController extends Controller
         return Redirect::back()->with('success', 'Vorgabe wurde erfolgreich aktualisiert.');
     }
 
+    /**
+     * Apply values to all months of a year for a group.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function applyToAllMonths(Request $request)
+    {
+        $this->validate($request, [
+            'group_id' => 'required|integer',
+            'year' => 'required|integer',
+            'hours' => 'required|numeric|min:0',
+            'away' => 'required|numeric|min:0',
+        ]);
+
+        $groupId = $request->group_id;
+        $year = $request->year;
+        $hours = $request->hours;
+        $away = $request->away;
+
+        for ($month = 1; $month <= 12; $month++) {
+            MinijobVorgabe::updateOrCreate(
+                [
+                    'group_id' => $groupId,
+                    'year' => $year,
+                    'month' => $month,
+                ],
+                [
+                    'hours' => $hours,
+                    'away' => $away,
+                ]
+            );
+        }
+
+        return Redirect::back()->with('success', 'Vorgaben für alle Monate übernommen.');
+    }
 }

@@ -38,12 +38,27 @@ class SendMinijobArbeitszeitenMailJob implements ShouldQueue
         $auswertungUtil = new ArbeitszeitUtil();
         $zeitpunkt = now()->subMonth();
         $ret=[];
+        $standard=[];
         foreach ($users as $user) {
             if (!$user->isMinijob()) {
                 continue;
             }
             if ($user->minijobGroups()->get()->isEmpty()) {;
                 $user->minijobGroups()->attach(1);
+            }
+            if ($auswertungUtil->isMinijobStandard($user)) {
+                $a = $auswertungUtil->minijobAbrechnung($user, $zeitpunkt);
+                if ($a["gearbeitet"] > 0 || $a["uebertrag_alt"] > 0) {
+                    $standard[] = [
+                        "user" => $user->name,
+                        "gearbeitet_nice" => $auswertungUtil->convertToHours($a["gearbeitet"]),
+                        "uebertrag_alt_nice" => $auswertungUtil->convertToHours($a["uebertrag_alt"]),
+                        "sum" => number_format($a["abzurechnen"]/60,2,","),
+                        "sum_nice" => $auswertungUtil->convertToHours($a["abzurechnen"]),
+                        "uebertrag_neu_nice" => $auswertungUtil->convertToHours($a["uebertrag_neu"]),
+                    ];
+                }
+                continue;
             }
             $v = $auswertungUtil->monatsAuswertung($user, $zeitpunkt);
             if ($v["sum"] > 0) {
@@ -56,6 +71,6 @@ class SendMinijobArbeitszeitenMailJob implements ShouldQueue
         }
         Mail::to("pohle@kanzlei-ludolph.de")
             ->bcc("k.doerfer@golfpark-hufeisensee.de")
-            ->send(new MinijobZeitenMail($zeitpunkt, $ret));
+            ->send(new MinijobZeitenMail($zeitpunkt, $ret, $standard));
     }
 }

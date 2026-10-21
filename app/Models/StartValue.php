@@ -36,5 +36,5 @@ use Illuminate\Database\Eloquent\Model;
 class StartValue extends Model
 {
     use HasFactory;
-    public $fillable = ["year","user_id"];
+    public $fillable = ["year","user_id","minijob_uebertrag"];
 }

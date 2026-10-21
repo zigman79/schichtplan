@@ -41,7 +41,12 @@ class CheckInOutController extends Controller
                 $arbeitszeit->ende = "23:59:00";
                 $arbeitszeit->ende_bestaetigt = true;
                 $arbeitszeit->save();
-                $user->notify(new ArbeitszeitUpdatedNotification($arbeitszeit));
+                try {
+                    $user->notify(new ArbeitszeitUpdatedNotification($arbeitszeit));
+
+                } catch (\Exception $e) {
+                    Telegram::sendMessage(env('TELEGRAM_GROUP'), "Fehler beim Senden der Notification an " . $user->name . ": " . $e->getMessage());
+                }
                 /* @var Arbeitszeit $arbeitszeit */
                 $arbeitszeit = $user->arbeitszeiten()->create([
                     "tag" => $now,

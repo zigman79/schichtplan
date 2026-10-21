@@ -2,58 +2,43 @@
   <Popover class="relative -mt-px w-full" v-slot="{ open, close }">
 
     <PopoverButton
-        class="flex w-full rounded-md relative shadow-sm group -space-x-px items-stretch focus-within:outline-none focus-within:ring-2 focus-within:ring-tenant-500 focus-within:ring-opacity-50">
-      <div class="relative flex items-stretch flex-grow focus-within:z-10">
+        class="flex w-full rounded-md relative shadow-xs group -space-x-px items-stretch focus-within:outline-hidden focus-within:ring-2 focus-within:ring-tenant-500/50">
+      <div class="relative flex items-stretch grow focus-within:z-10">
         <input
             type="text"
             readonly
             tabindex="-1"
             :value="isToday && !isOldAndNotToday || isFuture ? readableFutureTime : readableTime"
-            class="cursor-pointer block w-full sm:text-sm border-gray-300 rounded-l-md focus:ring-transparent focus:outline-none focus:shadow-none px-1 text-center"
+            class="cursor-pointer block w-full sm:text-sm border-gray-300 rounded-l-md focus:ring-transparent focus:outline-hidden focus:shadow-none px-1 text-center"
         />
       </div>
       <div
           :class="[{'bg-tenant-500 border-tenant-600 text-white' : open}, {'bg-gray-50 text-gray-400 group-hover:bg-gray-100 border-gray-300' : !open }]"
-          class="inline-flex justify-center items-center p-2 border text-sm font-semibold rounded-r-md focus:ring-transparent focus:outline-none focus:shadow-none">
+          class="inline-flex justify-center items-center p-2 border text-sm font-semibold rounded-r-md focus:ring-transparent focus:outline-hidden focus:shadow-none">
         <ChevronDownIcon class="h-4 w-4" :class="[{'transform rotate-180' : open}]" aria-hidden="true"/>
       </div>
     </PopoverButton>
 
-    <transition
-        enter-active-class="transition duration-200 ease-out"
-        enter-from-class="translate-y-1 opacity-0"
-        enter-to-class="translate-y-0 opacity-100"
-        leave-active-class="transition duration-150 ease-in"
-        leave-from-class="translate-y-0 opacity-100"
-        leave-to-class="translate-y-1 opacity-0"
-    >
+    <!-- Bewusst ohne Ein-/Ausblend-Transition: sowohl Vues <transition> als auch
+         HeadlessUIs TransitionRoot lassen hier ein unsichtbares Panel im DOM
+         zurück, das Klicks auf die darunterliegenden Slots abfängt.
+         HeadlessUI mountet/unmountet das Panel selbst sauber. -->
+      <!-- close aus dem Panel-Slot, nicht aus dem Popover-Slot: nur damit
+           lässt sich das Panel von innen heraus wirklich schließen -->
       <PopoverPanel
+          v-slot="{ close }"
           class="absolute z-10 w-screen sm:max-w-sm px-4 mt-2 transform -translate-x-1/2 left-1/2 sm:px-0"
           :class="[hasBreaks ? 'lg:max-w-2xl' : 'lg:max-w-lg']">
 
-
-        <div v-if="user.arbeitszeit_admin && !isAdmin || isOldAndNotToday"
-             class="absolute inset-0 z-10 rounded-lg overflow-hidden">
-          <div class="absolute inset-0 bg-white opacity-75"/>
-          <div class="absolute inset-0 z-5 flex justify-center items-center">
-            <span class="font-bold text-gray-700 text-xl" v-if="!isTeamleader">
-                Bei Änderungen bitte an Teamleiter wenden.
-            </span>
-            <span class="font-bold text-gray-700 text-xl" v-if="isTeamleader">
-                Bei Änderungen bitte an Administrator wenden.
-            </span>
-          </div>
-        </div>
-
-
         <form
             @submit.prevent="submitOrUpdate(close)"
-            class="overflow-hidden relative rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 bg-white"
+            class="overflow-hidden relative rounded-lg shadow-lg ring-1 ring-black/5 bg-white"
         >
           <div
-              :class="[{'opacity-50 pointer-events-none filter blur-sm' : isOldAndNotToday || user.arbeitszeit_admin && !isAdmin}]">
-            <div :class="[{'grid grid-cols-2 items-start' : hasBreaks}]" class="bg-white">
-              <div class="relative grid gap-4 p-7 lg:grid-cols-2">
+              :class="[{'opacity-50 pointer-events-none filter blur-xs' : isOldAndNotToday && !isAdmin && !isTeamleader}]">
+            <!-- Pausen erst ab lg neben dem Formular, auf dem Handy darunter -->
+            <div :class="[{'lg:grid lg:grid-cols-2 lg:items-start' : hasBreaks}]" class="bg-white">
+              <div class="relative grid grid-cols-2 gap-4 p-4 sm:p-7">
                 <div :class="[{'opacity-50 pointer-events-none' : isNotEditable}]">
                   <label for="begin"
                          class="block text-sm font-semibold text-gray-700">Arbeitsbegin</label>
@@ -63,8 +48,8 @@
                            name="begin"
                            id="begin"
                            @change="resetOther"
-                           class="shadow-sm focus:ring-tenant-500 focus:border-tenant-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                           placeholder="08:00"
+                           class="shadow-xs focus:ring-tenant-500 focus:border-tenant-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                           placeholder="12:00"
                     />
                   </div>
                   <div v-if="form.errors.beginn">
@@ -79,8 +64,8 @@
                            name="end"
                            id="end"
                            @change="resetOther"
-                           class="shadow-sm focus:ring-tenant-500 focus:border-tenant-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                           placeholder="20:00"
+                           class="shadow-xs focus:ring-tenant-500 focus:border-tenant-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                           placeholder="21:00"
                     />
                   </div>
                   <div v-if="form.errors.ende">
@@ -91,7 +76,7 @@
                      :class="[{'opacity-50 pointer-events-none' : isNotEditableAndNotAdmin}]">
                   <button type="button"
                           @click="addBreak"
-                          class="inline-flex w-full justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-semibold rounded-md text-gray-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                          class="inline-flex w-full justify-center items-center px-4 py-2 border border-gray-300 shadow-xs text-sm font-semibold rounded-md text-gray-600 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
                     <PlusIcon class="-ml-1 mr-1 h-4 w-4" aria-hidden="true"/>
                     <span>Pause hinzufügen</span>
                   </button>
@@ -105,13 +90,13 @@
                     <RadioGroupLabel class="block text-sm font-semibold text-gray-700 sr-only">
                       Andere
                     </RadioGroupLabel>
-                    <div class="relative z-0 inline-flex shadow-sm rounded-md w-full -space-x-px">
+                    <div class="relative z-0 inline-flex shadow-xs rounded-md w-full -space-x-px">
                       <RadioGroupOption
                           v-for="(option, optionIndex) in otherOptionen"
                           :key="`option--${optionIndex}--${date}--${user.name}`"
                           v-slot="{ checked }"
                           :value="option.value"
-                          class="flex-1 relative focus-within:outline-none focus-within:ring-1 focus-within:ring-tenant-500 focus-within:border-tenant-500 focus:z-10"
+                          class="flex-1 relative focus-within:outline-hidden focus-within:ring-1 focus-within:ring-tenant-500 focus-within:border-tenant-500 focus:z-10"
                       >
                                             <span
                                                 class="cursor-pointer w-full relative inline-flex items-center justify-center px-4 py-2 border text-sm font-semibold focus:border-tenant-500"
@@ -138,7 +123,7 @@
 
                   <button
                       type="submit"
-                      class="flex w-full justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-semibold rounded-md text-white bg-tenant-600 hover:bg-tenant-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tenant-500"
+                      class="flex w-full justify-center items-center px-4 py-2 border border-transparent shadow-xs text-sm font-semibold rounded-md text-white bg-tenant-600 hover:bg-tenant-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-tenant-500"
                       :disabled="form.processing"
                   >
                     <SpinningLoader tailwind="w-4 h-4 text-white" v-if="form.processing & saving"/>
@@ -148,7 +133,7 @@
 
                   <button
                       type="button"
-                      class="flex mt-2 w-full justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-semibold rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      class="flex mt-2 w-full justify-center items-center px-4 py-2 border border-transparent shadow-xs text-sm font-semibold rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                       :disabled="form.processing"
                       @click="resetForm(close)"
                   >
@@ -163,7 +148,7 @@
               <div class="bg-gray-50 h-full px-4 py-3 divide-y divide-gray-200"
                    v-if="hasBreaks"
               >
-                <div v-for="(pause, pauseIndex) in form.pausen" class="py-4">
+                <div v-for="(pause, pauseIndex) in form.pausen" :key="pauseIndex" class="py-4">
                   <div class="flex justify-between items-center">
                     <div class="text-sm font-semibold text-gray-900">
                       {{ pauseIndex + 1 }}. Pause
@@ -172,7 +157,7 @@
                             @click="removeBreak(pauseIndex)">Löschen
                     </button>
                   </div>
-                  <div class="lg:grid-cols-2 grid gap-2">
+                  <div class="grid grid-cols-2 gap-2">
                     <div>
                       <label :for="`pause_begin__${pauseIndex}`"
                              class="block text-sm font-semibold text-gray-700"
@@ -183,10 +168,13 @@
                         <input v-model="pause.beginn" type="time"
                                :name="`pause_beginn__${pauseIndex}`"
                                :id="`pause_beginn__${pauseIndex}`"
-                               class="shadow-sm focus:ring-tenant-500 focus:border-tenant-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                               class="shadow-xs focus:ring-tenant-500 focus:border-tenant-500 block w-full sm:text-sm border-gray-300 rounded-md"
                                placeholder="11:00"
                                @change="resetOther"
                         />
+                      </div>
+                      <div v-if="form.errors[`pausen.${pauseIndex}.beginn`]" class="mt-1 text-sm text-red-600">
+                        {{ form.errors[`pausen.${pauseIndex}.beginn`] }}
                       </div>
                     </div>
                     <div>
@@ -199,7 +187,7 @@
                         <input v-model="pause.ende" type="time"
                                :name="`pause_ende__${pauseIndex}`"
                                :id="`pause_ende__${pauseIndex}`"
-                               class="shadow-sm focus:ring-tenant-500 focus:border-tenant-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                               class="shadow-xs focus:ring-tenant-500 focus:border-tenant-500 block w-full sm:text-sm border-gray-300 rounded-md"
                                placeholder="12:00"
                                @change="resetOther"
                         />
@@ -214,17 +202,17 @@
 
         </form>
       </PopoverPanel>
-    </transition>
   </Popover>
 </template>
 
 <script>
 import { Popover, PopoverButton, PopoverPanel, RadioGroup, RadioGroupLabel, RadioGroupOption } from '@headlessui/vue'
-import { ChevronDownIcon, PlusIcon, TrashIcon } from '@heroicons/vue/solid'
+import { ChevronDownIcon, PlusIcon, TrashIcon } from '@heroicons/vue/24/solid'
 import { computed, nextTick, ref, watch } from 'vue'
-import { useForm } from '@inertiajs/inertia-vue3'
-import SpinningLoader from '@/Components/SpinningLoader'
-import { slotRights } from '@/utils/arbeitsplan-rights'
+import { useForm } from '@inertiajs/vue3'
+import SpinningLoader from '@/Components/SpinningLoader.vue'
+import { slotRights } from '@/utils/arbeitsplan-rights.js'
+import { isFunction } from 'lodash'
 
 export default {
   components: {
@@ -325,22 +313,28 @@ export default {
     }
 
     const resetForm = (close) => {
-      if (form.id) {
-        deleting.value = true
-        if (confirm('Sicher diese Arbeitszeit zu löschen?')) {
-          form.delete(`/arbeitszeiten/${form.id}`, {
-            preserveScroll: true,
-            preserveState: false,
-            onSuccess: () => {
-              nextTick(() => form.reset())
-              deleting.value = false
-              close()
-            },
-          })
-        }
-      } else {
+      if (!form.id) {
         form.reset()
+        return
       }
+
+      if (!confirm('Sicher diese Arbeitszeit zu löschen?')) {
+        return
+      }
+
+      deleting.value = true
+
+      // Direkt schließen statt im Callback: der Slot wird ohnehin über die
+      // neuen Props aktualisiert, und die Toast-Meldung bestätigt das Löschen
+      close()
+
+      form.delete(`/arbeitszeiten/${form.id}`, {
+        preserveScroll: true,
+        onFinish: () => {
+          deleting.value = false
+          nextTick(() => form.reset())
+        },
+      })
     }
 
     const setFormFromProps = () => {
@@ -358,6 +352,14 @@ export default {
         readableTime.value = arbeitszeit.readable_time
         readableFutureTime.value = arbeitszeit.readable_future_time
 
+      } else {
+        // Arbeitszeit wurde gelöscht (oder Slot wird für einen anderen
+        // User/Tag wiederverwendet) -> Formular und Anzeige leeren
+        form.reset()
+        form.tag = props.date
+
+        readableTime.value = null
+        readableFutureTime.value = null
       }
     }
 

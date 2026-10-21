@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Arbeitszeit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -89,10 +90,6 @@ class Shift extends Model
      */
     public function canUserEnroll(User $user): bool
     {
-        // Check if shift is full
-        if ($this->is_full) {
-            return false;
-        }
 
         // Check if user is in the job group
         if (!$user->jobGroups->contains($this->job_group_id)) {
@@ -105,6 +102,32 @@ class Shift extends Model
         }
 
         return true;
+    }
+
+    public function createArbeitszeit(User $user): void
+    {
+        $date = $this->shift_date->format('Y-m-d');
+
+        if ($user->arbeitszeiten()->where('tag', $date)->exists()) {
+            return;
+        }
+
+        $user->arbeitszeiten()->create([
+            'tag'    => $date,
+            'beginn' => $this->start_time->format('H:i:s'),
+            'ende'   => $this->end_time->format('H:i:s'),
+        ]);
+    }
+
+    public function deleteArbeitszeit(User $user): void
+    {
+        $date = $this->shift_date->format('Y-m-d');
+
+        $user->arbeitszeiten()
+            ->where('tag', $date)
+            ->where('beginn', $this->start_time->format('H:i:s'))
+            ->where('ende', $this->end_time->format('H:i:s'))
+            ->delete();
     }
 
     /**

@@ -7,7 +7,7 @@
                     <div class="flex justify-between h-16">
                         <div class="flex">
                             <!-- Logo -->
-                            <div class="flex-shrink-0 flex items-center">
+                            <div class="shrink-0 flex items-center">
                                 <Link :href="route('dashboard')">
                                     <BreezeApplicationLogo class="block h-9 w-auto"/>
                                 </Link>
@@ -38,7 +38,7 @@
                                     <template #trigger>
                                         <span class="inline-flex rounded-md">
                                             <button type="button"
-                                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
+                                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-hidden transition ease-in-out duration-150">
                                                 {{ $page.props.auth.user.name }}
 
                                                 <svg class="ml-2 -mr-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg"
@@ -66,7 +66,7 @@
                         <!-- Hamburger -->
                         <div class="-mr-2 flex items-center sm:hidden">
                             <button @click="showingNavigationDropdown = ! showingNavigationDropdown"
-                                    class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
+                                    class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-hidden focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
                                 <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                                     <path
                                         :class="{'hidden': showingNavigationDropdown, 'inline-flex': ! showingNavigationDropdown }"
@@ -118,13 +118,13 @@
             </nav>
 
             <!-- Page Heading -->
-            <header class="bg-white" v-if="$slots.header" :class="[{'shadow' : !$slots.subHeader}]">
+            <header class="bg-white" v-if="$slots.header" :class="[{'shadow-sm' : !$slots.subHeader}]">
                 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                     <slot name="header"/>
                 </div>
             </header>
 
-            <header class="bg-white shadow -mt-px" v-if="$slots.subHeader">
+            <header class="bg-white shadow-sm -mt-px" v-if="$slots.subHeader">
                 <div class="max-w-7xl mx-auto pb-4 px-4 sm:px-6 lg:px-8">
                     <div class="border-t border-gray-200 mb-4"></div>
                     <slot name="subHeader"/>
@@ -146,8 +146,8 @@ import BreezeDropdown from '@/Components/Dropdown.vue'
 import BreezeDropdownLink from '@/Components/DropdownLink.vue'
 import BreezeNavLink from '@/Components/NavLink.vue'
 import BreezeResponsiveNavLink from '@/Components/ResponsiveNavLink.vue'
-import {Link, usePage} from '@inertiajs/inertia-vue3'
-import FlashMessages from '@/Components/FlashMessages'
+import {Link, usePage} from '@inertiajs/vue3'
+import FlashMessages from '@/Components/FlashMessages.vue'
 import {ref} from 'vue'
 
 export default {
@@ -163,10 +163,10 @@ export default {
 
     setup() {
 
-        const isAdmin = usePage().props.value.auth.user.arbeitszeit_admin
-        const isTeamLeader = usePage().props.value.auth.user.arbeitszeit_teamleader || usePage().props.value.auth.user.arbeitszeit_admin
-        const switched = usePage().props.value.auth.switched
-        const genderLanguage = usePage().props.value.genderLanguage || false
+        const isAdmin = usePage().props.auth.user.arbeitszeit_admin
+        const isTeamLeader = usePage().props.auth.user.arbeitszeit_teamleader || usePage().props.auth.user.arbeitszeit_admin
+        const switched = usePage().props.auth.switched
+        const genderLanguage = usePage().props.genderLanguage || false
 
         const showingNavigationDropdown = ref(false)
 
@@ -205,6 +205,12 @@ export default {
                 'name': 'Schichten',
                 'route': 'shifts.index',
                 'active': 'shifts.*',
+                'if': isTeamLeader,
+            },
+            {
+                'name': 'Jahresübersicht',
+                'route': 'jahresuebersicht',
+                'active': 'jahresuebersicht',
                 'if': isTeamLeader,
             },
             {

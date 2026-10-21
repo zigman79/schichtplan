@@ -8,7 +8,7 @@
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                     Wochenplan
                 </h2>
-                <div class="flex-shrink-0 mt-1 sm:mt-0">
+                <div class="shrink-0 mt-1 sm:mt-0">
                     <a target="_blank" :href="route('print.wochenplan')" download>
                         <Button>
                             Wochenplan als PDF runterladen
@@ -21,13 +21,13 @@
 
         <div class="py-12 hidden md:block">
             <div class="max-w-[100rem] mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white rounded-md shadow  p-4">
-                    <div class="rounded shadow ring-1 ring-black ring-opacity-5 overflow-x-auto">
+                <div class="bg-white rounded-md shadow-sm  p-4">
+                    <div class="rounded-sm shadow-sm ring-1 ring-black/5 overflow-x-auto">
                         <table class="w-full whitespace-nowrap divide-y divide-gray-300">
                             <thead class="bg-gray-800">
                             <tr class="text-left font-bold divide-x divide-gray-700 text-white">
                                 <th class="pl-4 pt-6 pb-4"></th>
-                                <template v-for="(tag, tagIdx) in wochenplan.tag" :key="tag">
+                                <template v-for="(tag) in wochenplan.tag" :key="tag">
                                     <th class="px-6 pt-6 pb-4">{{ tag }}</th>
                                 </template>
                             </tr>
@@ -111,8 +111,8 @@
             </div>
         </div>
         <div class="py-4 md:hidden space-y-6 p-2">
-                <template v-for="(tag, tagIdx) in wochenplan.tag">
-            <div class="bg-white rounded-md shadow p-4 space-y-6 overflow-hidden">
+                <template v-for="(tag, tagIdx) in wochenplan.tag" :key="`tag-${tagIdx}`">
+            <div class="bg-white rounded-md shadow-sm p-4 space-y-6 overflow-hidden">
                     <div>
                         <div class="-mx-4 -mt-4 bg-gray-900" style="width: calc(100% + 2rem)">
                             <h3 class="text-lg font-bold leading-6 text-white p-4">{{ tag }}</h3>
@@ -174,12 +174,10 @@
 <script>
 import {ref} from "vue";
 import BreezeAuthenticatedLayout from '@/Layouts/Authenticated.vue'
-import {ChevronRightIcon, FingerPrintIcon} from '@heroicons/vue/solid'
-import {Head, Link, usePage} from '@inertiajs/inertia-vue3'
-import Button from '@/Components/Button'
-import NavLink from '@/Components/NavLink'
-import {Inertia} from '@inertiajs/inertia'
-
+import {ChevronRightIcon, FingerPrintIcon} from '@heroicons/vue/24/solid'
+import { Head, Link, usePage, router } from '@inertiajs/vue3'
+import Button from '@/Components/Button.vue'
+import NavLink from '@/Components/NavLink.vue'
 export default {
     props: {
         wochenplan: {

@@ -66,6 +66,8 @@ class MinijobGroupController extends Controller
      */
     public function edit(MinijobGroup $minijobGroup)
     {
+        $minijobGroup->load('users:id,name');
+
         return Inertia::render('MinijobGroup/Edit', [
             'group' => $minijobGroup,
         ]);

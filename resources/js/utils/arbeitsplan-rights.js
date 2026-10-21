@@ -1,13 +1,13 @@
 import {computed} from "vue";
-import {usePage} from "@inertiajs/inertia-vue3";
+import {usePage} from "@inertiajs/vue3";
 
 export function slotRights (props) {
     // Computed Boolean if user is admin
-    const isAdmin = computed(() => usePage().props.value.auth.user.arbeitszeit_admin || usePage().props.value.auth.superTeamleaders.includes(usePage().props.value.auth.user.name));
+    const isAdmin = computed(() => usePage().props.auth.user.arbeitszeit_admin || usePage().props.auth.superTeamleaders.includes(usePage().props.auth.user.name));
     // Computed Boolean if user is Teamleader
-    const isTeamleader = computed(() => usePage().props.value.auth.user.arbeitszeit_teamleader)
+    const isTeamleader = computed(() => usePage().props.auth.user.arbeitszeit_teamleader)
     // Computed Boolean if user is current User
-    const isCurrentUser = computed(() => usePage().props.value.auth.user.id === props.user.id)
+    const isCurrentUser = computed(() => usePage().props.auth.user.id === props.user.id)
 
     // Computed property if admin or teamleader or currentuser
     const hasEditRights = computed(() => isAdmin.value || isTeamleader.value || isCurrentUser.value)

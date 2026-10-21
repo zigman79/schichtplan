@@ -15,7 +15,7 @@
                     <select
                         id="year"
                         v-model="year"
-                        class="block w-full sm:w-32 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-tenant-500 focus:border-tenant-500 sm:text-sm rounded-md">
+                        class="block w-full sm:w-32 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-hidden focus:ring-tenant-500 focus:border-tenant-500 sm:text-sm rounded-md">
                         <option
                             v-for="(year, key) in years"
                             :key="`year-${key}`"
@@ -35,7 +35,7 @@
                 <select
                     id="group"
                     v-model="currentGroupId"
-                    class="block w-full sm:w-32 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-tenant-500 focus:border-tenant-500 sm:text-sm rounded-md">
+                    class="block w-full sm:w-32 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-hidden focus:ring-tenant-500 focus:border-tenant-500 sm:text-sm rounded-md">
                     <option
                         v-for="(group, key) in groups"
                         :key="`group-${key}`"
@@ -68,7 +68,7 @@
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-                <div class="bg-white rounded-md shadow overflow-x-auto p-6">
+                <div class="bg-white rounded-md shadow-sm overflow-x-auto p-6">
                     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         <template v-for="(month, key) in months" :key="`${currentGroupId}-${year}-month-${key}`">
                             <minijob-vorgabe-slot
@@ -91,18 +91,18 @@
 <script>
 
 import BreezeAuthenticatedLayout from '@/Layouts/Authenticated.vue'
-import {ChevronRightIcon} from '@heroicons/vue/solid'
-import {Head, Link} from '@inertiajs/inertia-vue3'
-import Button from '@/Components/Button'
-import NavLink from '@/Components/NavLink'
+import {ChevronRightIcon} from '@heroicons/vue/24/solid'
+import { Head, Link, router } from '@inertiajs/vue3'
+import Button from '@/Components/Button.vue'
+import NavLink from '@/Components/NavLink.vue'
 import {ref, watchEffect} from 'vue'
-import {Inertia} from '@inertiajs/inertia'
-import MinijobVorgabeSlot from '@/Components/MinijobVorgabeSlot'
+import MinijobVorgabeSlot from '@/Components/MinijobVorgabeSlot.vue'
 
 export default {
     props: {
         year: String,
         groups: Object,
+        selectedGroupId: Number,
     },
     setup(props, {attrs}) {
 
@@ -121,11 +121,13 @@ export default {
             'Dezember',
         ]
 
-        const year = ref(parseInt(props.year) || today.getFullYear())
+        const year = ref(parseInt(props.year) || new Date().getFullYear())
         const loading = ref(false)
 
-        const currentGroupId = ref(props.groups[0].id)
-        const currentGroup = ref(props.groups[0])
+        // Gruppen-ID aus Props oder erste Gruppe als Fallback
+        const initialGroupId = props.selectedGroupId || props.groups[0].id
+        const currentGroupId = ref(initialGroupId)
+        const currentGroup = ref(props.groups.find(g => g.id === initialGroupId) || props.groups[0])
 
         watchEffect(() => {
             currentGroup.value = props.groups.find(group => group.id === currentGroupId.value)
@@ -146,7 +148,9 @@ export default {
             if (parseInt(props.year) !== year.value) {
                 loading.value = true
 
-                Inertia.get(`/minijobvorgaben/${year.value}`, {}, {
+                router.get(`/minijobvorgaben/${year.value}`, {
+                    group: currentGroupId.value
+                }, {
                     onSuccess: () => {
                         loading.value = false
                     },

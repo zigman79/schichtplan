@@ -1,7 +1,7 @@
 <template>
     <form
         @submit.prevent="submitOrUpdate"
-        class="p-4 border-gray-200 border rounded"
+        class="p-4 border-gray-200 border rounded-sm"
         :class="[{'bg-gray-50' : altBackground}]"
     >
         <label v-if="label" :for="`hours-${form.month}`" class="font-semibold">{{ label }}</label>
@@ -12,7 +12,7 @@
                 <number-input
                     required
                     v-model="form.hours"
-                    class="shadow-sm focus:ring-tenant-500 focus:border-tenant-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                    class="shadow-xs focus:ring-tenant-500 focus:border-tenant-500 block w-full sm:text-sm border-gray-300 rounded-md"
                     :id="`hours-${month}`"
                     :precision="3"
                 />
@@ -23,28 +23,41 @@
                 <number-input
                     required
                     v-model="form.away"
-                    class="shadow-sm focus:ring-tenant-500 focus:border-tenant-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                    class="shadow-xs focus:ring-tenant-500 focus:border-tenant-500 block w-full sm:text-sm border-gray-300 rounded-md"
                     :id="`hours-${form.away}`"
                     :precision="3"
                 />
             </div>
         </div>
-        <div class="w-full mt-2" :class="[{'opacity-50 pointer-events-none' : !isDirty}]">
-            <button
-                class="w-full bg-tenant-600 hover:bg-tenant-700  focus:ring-tenant-500 flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-white text-sm font-semibold rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2"
-                type="submit"
-            >
-                <SpinningLoader tailwind="w-4 h-4 text-white" v-if="form.processing & saving"/>
-                <span>Speichern</span>
-            </button>
+        <div class="w-full mt-2 space-y-2">
+            <div :class="[{'opacity-50 pointer-events-none' : !isDirty}]">
+                <button
+                    class="w-full bg-tenant-600 hover:bg-tenant-700  focus:ring-tenant-500 flex justify-center items-center px-4 py-2 border border-transparent shadow-xs text-white text-sm font-semibold rounded-md focus:outline-hidden focus:ring-2 focus:ring-offset-2"
+                    type="submit"
+                >
+                    <SpinningLoader tailwind="w-4 h-4 text-white" v-if="form.processing & saving"/>
+                    <span>Speichern</span>
+                </button>
+            </div>
+            <div v-if="showApplyToAll">
+                <button
+                    @click.prevent="applyToAllMonths"
+                    class="w-full bg-gray-600 hover:bg-gray-700 focus:ring-gray-500 flex justify-center items-center px-4 py-2 border border-transparent shadow-xs text-white text-sm font-semibold rounded-md focus:outline-hidden focus:ring-2 focus:ring-offset-2"
+                    type="button"
+                    :disabled="applyingToAll"
+                >
+                    <SpinningLoader tailwind="w-4 h-4 text-white mr-2" v-if="applyingToAll"/>
+                    <span>Für alle Monate übernehmen</span>
+                </button>
+            </div>
         </div>
     </form>
 </template>
 
 <script>
-import NumberInput from '@/Components/NumberInput'
-import SpinningLoader from '@/Components/SpinningLoader'
-import {useForm} from '@inertiajs/inertia-vue3'
+import NumberInput from '@/Components/NumberInput.vue'
+import SpinningLoader from '@/Components/SpinningLoader.vue'
+import { useForm, router } from '@inertiajs/vue3'
 import {computed, ref, watch} from 'vue'
 
 export default {
@@ -146,12 +159,42 @@ export default {
             }
         }
 
+        // Nur im Januar anzeigen
+        const showApplyToAll = computed(() => {
+            return props.month === 1
+        })
+
+        const applyingToAll = ref(false)
+
+        const applyToAllMonths = () => {
+            if (!form.hours && form.hours !== 0) return
+
+            applyingToAll.value = true
+            router.post(`/minijobvorgaben/apply-to-all`, {
+                group_id: props.groupId,
+                year: props.year,
+                hours: form.hours,
+                away: form.away,
+            }, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    applyingToAll.value = false
+                },
+                onError: () => {
+                    applyingToAll.value = false
+                },
+            })
+        }
+
         return {
             vorgabe,
             form,
             submitOrUpdate,
             saving,
             isDirty,
+            showApplyToAll,
+            applyingToAll,
+            applyToAllMonths,
         }
     },
 }
