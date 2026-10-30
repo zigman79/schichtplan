@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\CheckInOutController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\GreenkeepingController;
 use App\Http\Controllers\Api\ShiftEnrollmentController;
 use App\Http\Controllers\ArbeitszeitController;
 use Illuminate\Http\Request;
@@ -42,3 +43,8 @@ Route::group(['middleware' => ['auth:sanctum','ability:token:create']], function
     Route::post('/device/register', [RFIDController::class,'registerDeviceRegister']);
 });
 
+// Greenkeeper-Orga: Abwesenheiten (ohne Grund) und Stempelstatus heute.
+// Token mit Fähigkeit greenkeeping:read über `php artisan greenkeeping:token`.
+Route::group(['middleware' => ['auth:sanctum', 'ability:greenkeeping:read', 'throttle:60,1']], function () {
+    Route::get('greenkeeping/verfuegbarkeit', [GreenkeepingController::class, 'verfuegbarkeit']);
+});
